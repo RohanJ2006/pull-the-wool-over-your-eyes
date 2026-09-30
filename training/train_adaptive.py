@@ -19,11 +19,6 @@ from models.visual_masker import VisualMasker
 from models.adaptive_hidden_insight import AdaptiveHiddenInsight
 from models.noise import add_gaussian_noise
 
-
-# ============================================================
-# CONFIG
-# ============================================================
-
 IMAGE_SIZE = 64
 BATCH_SIZE = 32
 
@@ -32,7 +27,6 @@ STEPS_PER_EPOCH = 100
 
 LEARNING_RATE = 0.001
 
-# Train using multiple noise levels
 NOISE_LEVELS = [0.03, 0.05, 0.07, 0.10]
 
 CHECKPOINT_DIR = os.path.join(
@@ -46,20 +40,11 @@ os.makedirs(
 )
 
 
-# ============================================================
-# DEVICE
-# ============================================================
-
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
 print("Device:", device)
-
-
-# ============================================================
-# DATASET
-# ============================================================
 
 transform = transforms.Compose([
     transforms.Resize(
@@ -93,19 +78,9 @@ print(
     len(dataset)
 )
 
-
-# ============================================================
-# MODELS
-# ============================================================
-
 masker = VisualMasker().to(device)
 
 decoder = AdaptiveHiddenInsight().to(device)
-
-
-# ============================================================
-# LOSS + OPTIMIZER
-# ============================================================
 
 criterion = nn.MSELoss()
 
@@ -114,11 +89,6 @@ optimizer = optim.Adam(
     list(decoder.parameters()),
     lr=LEARNING_RATE,
 )
-
-
-# ============================================================
-# TRAINING
-# ============================================================
 
 print(
     "\nStarting noise-adaptive training...\n"
@@ -144,20 +114,12 @@ for epoch in range(EPOCHS):
 
         cover = cover.to(device)
 
-        # ----------------------------------------------------
-        # Pick different images as secrets
-        # ----------------------------------------------------
-
         permutation = torch.randperm(
             cover.size(0),
             device=device
         )
 
         secret = cover[permutation]
-
-        # ----------------------------------------------------
-        # Randomly select a noise level
-        # ----------------------------------------------------
 
         noise_factor = NOISE_LEVELS[
             torch.randint(
@@ -173,45 +135,25 @@ for epoch in range(EPOCHS):
             device=device
         )
 
-        # ----------------------------------------------------
-        # Encode
-        # ----------------------------------------------------
-
         encoded = masker(
             cover,
             secret
         )
-
-        # ----------------------------------------------------
-        # Add noise
-        # ----------------------------------------------------
 
         noisy_encoded = add_gaussian_noise(
             encoded,
             noise_factor
         )
 
-        # ----------------------------------------------------
-        # Adaptive decoding
-        # ----------------------------------------------------
-
         reconstructed = decoder(
             noisy_encoded,
             noise_tensor
         )
 
-        # ----------------------------------------------------
-        # Reconstruction loss
-        # ----------------------------------------------------
-
         loss = criterion(
             reconstructed,
             secret
         )
-
-        # ----------------------------------------------------
-        # Backpropagation
-        # ----------------------------------------------------
 
         optimizer.zero_grad()
 
@@ -235,10 +177,6 @@ for epoch in range(EPOCHS):
         f"Epoch {epoch + 1}: "
         f"loss = {average_loss:.6f}"
     )
-
-    # --------------------------------------------------------
-    # Save checkpoint
-    # --------------------------------------------------------
 
     checkpoint_path = os.path.join(
         CHECKPOINT_DIR,

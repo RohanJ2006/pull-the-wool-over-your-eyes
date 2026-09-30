@@ -15,17 +15,9 @@ def main():
     cover = torch.rand(2, 3, 64, 64).to(device)
     secret = torch.rand(2, 3, 64, 64).to(device)
 
-    # -----------------------------------------
-    # STEP 1: Encode
-    # -----------------------------------------
-
     encoded = masker(cover, secret)
 
     print("Encoded:", encoded.shape)
-
-    # -----------------------------------------
-    # STEP 2: Add Gaussian noise
-    # -----------------------------------------
 
     noise_factor = 0.05
 
@@ -36,17 +28,9 @@ def main():
 
     print("Noisy encoded:", noisy_encoded.shape)
 
-    # -----------------------------------------
-    # STEP 3: Decode
-    # -----------------------------------------
-
     reconstructed = decoder(noisy_encoded)
 
     print("Reconstructed:", reconstructed.shape)
-
-    # -----------------------------------------
-    # STEP 4: Basic sanity checks
-    # -----------------------------------------
 
     print(
         "Reconstructed min:",

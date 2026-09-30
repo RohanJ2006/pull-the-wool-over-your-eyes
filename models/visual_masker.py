@@ -21,17 +21,6 @@ class ConvBlock(nn.Module):
 
 
 class VisualMasker(nn.Module):
-    """
-    VRIS-style encoder.
-
-    Inputs:
-        cover  - cover image, shape [B, 3, H, W]
-        secret - secret image, shape [B, 3, H, W]
-
-    Output:
-        encoded image, shape [B, 3, H, W]
-    """
-
     def __init__(self):
         super().__init__()
 

@@ -33,10 +33,6 @@ class AdaptiveHiddenInsight(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # ----------------------------------------------------
-        # Encoder
-        # ----------------------------------------------------
-
         self.enc1 = ConvBlock(3, 32)
         self.pool1 = nn.MaxPool2d(2)
 
@@ -45,13 +41,6 @@ class AdaptiveHiddenInsight(nn.Module):
 
         self.enc3 = ConvBlock(64, 128)
 
-        # ----------------------------------------------------
-        # Noise conditioning
-        #
-        # Converts the scalar noise factor into a 128-D
-        # conditioning vector.
-        # ----------------------------------------------------
-
         self.noise_condition = nn.Sequential(
             nn.Linear(1, 64),
             nn.ReLU(inplace=True),
@@ -59,10 +48,6 @@ class AdaptiveHiddenInsight(nn.Module):
             nn.Linear(64, 128),
             nn.ReLU(inplace=True),
         )
-
-        # ----------------------------------------------------
-        # Decoder
-        # ----------------------------------------------------
 
         self.up1 = nn.ConvTranspose2d(
             128,
@@ -92,10 +77,6 @@ class AdaptiveHiddenInsight(nn.Module):
 
     def forward(self, x, noise_factor):
 
-        # ----------------------------------------------------
-        # Encode noisy image
-        # ----------------------------------------------------
-
         x = self.enc1(x)
         x = self.pool1(x)
 
@@ -104,15 +85,6 @@ class AdaptiveHiddenInsight(nn.Module):
 
         x = self.enc3(x)
 
-        # ----------------------------------------------------
-        # Noise conditioning
-        # ----------------------------------------------------
-
-        # Accept either:
-        #   [batch]
-        # or
-        #   [batch, 1]
-
         if noise_factor.dim() == 1:
             noise_factor = noise_factor.unsqueeze(1)
 
@@ -120,21 +92,13 @@ class AdaptiveHiddenInsight(nn.Module):
             noise_factor
         )
 
-        # [B, 128] -> [B, 128, 1, 1]
-
         condition = condition.unsqueeze(
             -1
         ).unsqueeze(
             -1
         )
 
-        # Add noise information to bottleneck
-
         x = x + condition
-
-        # ----------------------------------------------------
-        # Decode
-        # ----------------------------------------------------
 
         x = self.up1(x)
 

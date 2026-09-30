@@ -16,11 +16,6 @@ from models.visual_masker import VisualMasker
 from models.adaptive_hidden_insight import AdaptiveHiddenInsight
 from models.noise import add_gaussian_noise
 
-
-# ============================================================
-# CONFIG
-# ============================================================
-
 IMAGE_SIZE = 64
 BATCH_SIZE = 32
 
@@ -34,21 +29,11 @@ NOISE_LEVELS = [0.03, 0.05, 0.07, 0.10]
 
 TEST_BATCHES = 20
 
-
-# ============================================================
-# DEVICE
-# ============================================================
-
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
 print("Device:", device)
-
-
-# ============================================================
-# DATASET
-# ============================================================
 
 transform = transforms.Compose([
     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
@@ -74,18 +59,8 @@ dataloader = DataLoader(
 
 print("Test images:", len(dataset))
 
-
-# ============================================================
-# MODELS
-# ============================================================
-
 masker = VisualMasker().to(device)
 decoder = AdaptiveHiddenInsight().to(device)
-
-
-# ============================================================
-# LOAD CHECKPOINT
-# ============================================================
 
 print("\nLoading checkpoint:")
 print(CHECKPOINT)
@@ -116,11 +91,6 @@ print(
     checkpoint["noise_levels"]
 )
 
-
-# ============================================================
-# PSNR
-# ============================================================
-
 def calculate_psnr(mse):
 
     if mse <= 0:
@@ -129,11 +99,6 @@ def calculate_psnr(mse):
     return 10.0 * torch.log10(
         torch.tensor(1.0 / mse)
     ).item()
-
-
-# ============================================================
-# SSIM
-# ============================================================
 
 def calculate_ssim_batch(
     reconstructed,
@@ -168,17 +133,11 @@ def calculate_ssim_batch(
 
     return sum(scores) / len(scores)
 
-
-# ============================================================
-# EVALUATION
-# ============================================================
-
 print(
     "\nStarting noise-adaptive evaluation...\n"
 )
 
 results = []
-
 
 with torch.no_grad():
 
@@ -207,29 +166,17 @@ with torch.no_grad():
                 device=device
             )
 
-            secret = cover[permutation]
-
-            # ------------------------------------------------
-            # Encode
-            # ------------------------------------------------
+            secret = cover[permutation]--
 
             encoded = masker(
                 cover,
                 secret
             )
 
-            # ------------------------------------------------
-            # Add noise
-            # ------------------------------------------------
-
             noisy_encoded = add_gaussian_noise(
                 encoded,
                 noise_factor
             )
-
-            # ------------------------------------------------
-            # Tell adaptive decoder the noise level
-            # ------------------------------------------------
 
             noise_tensor = torch.full(
                 (cover.size(0),),
@@ -237,26 +184,14 @@ with torch.no_grad():
                 device=device
             )
 
-            # ------------------------------------------------
-            # Adaptive decode
-            # ------------------------------------------------
-
             reconstructed = decoder(
                 noisy_encoded,
                 noise_tensor
             )
 
-            # ------------------------------------------------
-            # MSE
-            # ------------------------------------------------
-
             mse = torch.mean(
                 (reconstructed - secret) ** 2
             ).item()
-
-            # ------------------------------------------------
-            # SSIM
-            # ------------------------------------------------
 
             batch_ssim = calculate_ssim_batch(
                 reconstructed,
@@ -292,11 +227,6 @@ with torch.no_grad():
         )
 
         print()
-
-
-# ============================================================
-# FINAL TABLE
-# ============================================================
 
 print("=" * 65)
 print("NOISE-ADAPTIVE RESULTS")

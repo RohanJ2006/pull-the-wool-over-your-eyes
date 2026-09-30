@@ -1,20 +1,11 @@
 import sys
 import os
 
-# ============================================================
-# PROJECT ROOT
-# ============================================================
-
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 
 sys.path.append(PROJECT_ROOT)
-
-
-# ============================================================
-# IMPORTS
-# ============================================================
 
 import torch
 from torch.utils.data import DataLoader
@@ -26,43 +17,24 @@ from models.visual_masker import VisualMasker
 from models.hidden_insight import HiddenInsight
 from models.noise import add_gaussian_noise
 
-
-# ============================================================
-# CONFIG
-# ============================================================
-
 IMAGE_SIZE = 64
 BATCH_SIZE = 32
 
-# Use the checkpoint we just trained
 CHECKPOINT = os.path.join(
     PROJECT_ROOT,
     "checkpoints",
     "baseline_epoch_10.pt"
 )
 
-# Test all four noise levels from the project
 NOISE_LEVELS = [0.03, 0.05, 0.07, 0.10]
 
-# Number of test batches.
-# 20 batches = 640 images.
 TEST_BATCHES = 20
-
-
-# ============================================================
-# DEVICE
-# ============================================================
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
 print("Device:", device)
-
-
-# ============================================================
-# DATASET
-# ============================================================
 
 transform = transforms.Compose([
     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
@@ -88,18 +60,8 @@ dataloader = DataLoader(
 
 print("Test images:", len(dataset))
 
-
-# ============================================================
-# MODELS
-# ============================================================
-
 masker = VisualMasker().to(device)
 decoder = HiddenInsight().to(device)
-
-
-# ============================================================
-# LOAD CHECKPOINT
-# ============================================================
 
 print("\nLoading checkpoint:")
 
@@ -131,11 +93,6 @@ print(
     checkpoint["noise_factor"]
 )
 
-
-# ============================================================
-# PSNR
-# ============================================================
-
 def calculate_psnr(mse):
     """
     Calculate PSNR for images in [0, 1].
@@ -147,11 +104,6 @@ def calculate_psnr(mse):
     return 10.0 * torch.log10(
         torch.tensor(1.0 / mse)
     ).item()
-
-
-# ============================================================
-# SSIM
-# ============================================================
 
 def calculate_ssim_batch(
     reconstructed,
@@ -188,15 +140,9 @@ def calculate_ssim_batch(
 
     return sum(scores) / len(scores)
 
-
-# ============================================================
-# EVALUATION
-# ============================================================
-
 print("\nStarting baseline evaluation...\n")
 
 results = []
-
 
 with torch.no_grad():
 
@@ -217,7 +163,6 @@ with torch.no_grad():
 
             cover = cover.to(device)
 
-            # Create a different secret image
             permutation = torch.randperm(
                 cover.size(0),
                 device=device
@@ -225,43 +170,23 @@ with torch.no_grad():
 
             secret = cover[permutation]
 
-            # ------------------------------------------------
-            # Encode
-            # ------------------------------------------------
-
             encoded = masker(
                 cover,
                 secret
             )
-
-            # ------------------------------------------------
-            # Add test noise
-            # ------------------------------------------------
 
             noisy_encoded = add_gaussian_noise(
                 encoded,
                 noise_factor
             )
 
-            # ------------------------------------------------
-            # Decode
-            # ------------------------------------------------
-
             reconstructed = decoder(
                 noisy_encoded
             )
 
-            # ------------------------------------------------
-            # MSE
-            # ------------------------------------------------
-
             mse = torch.mean(
                 (reconstructed - secret) ** 2
             ).item()
-
-            # ------------------------------------------------
-            # SSIM
-            # ------------------------------------------------
 
             batch_ssim = calculate_ssim_batch(
                 reconstructed,
@@ -272,10 +197,6 @@ with torch.no_grad():
             total_ssim += batch_ssim
 
             batches += 1
-
-        # ----------------------------------------------------
-        # Average metrics
-        # ----------------------------------------------------
 
         average_mse = total_mse / batches
         average_ssim = total_ssim / batches
@@ -301,11 +222,6 @@ with torch.no_grad():
         )
 
         print()
-
-
-# ============================================================
-# FINAL TABLE
-# ============================================================
 
 print("=" * 65)
 

@@ -31,17 +31,6 @@ class ConvBlock(nn.Module):
 
 
 class HiddenInsight(nn.Module):
-    """
-    Decoder that reconstructs the secret image from
-    the noisy encoded image.
-
-    Input:
-        noisy_encoded: [B, 3, H, W]
-
-    Output:
-        reconstructed secret: [B, 3, H, W]
-    """
-
     def __init__(self):
         super().__init__()
 
